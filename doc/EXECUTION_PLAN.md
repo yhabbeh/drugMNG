@@ -416,7 +416,7 @@ _Status: [x] Done_
 
 ## Phase 2: Caregiver Profiles Feature
 
-_Status: [x] TASK-2.1 · [ ] TASK-2.2 · [ ] TASK-2.3_
+_Status: [x] TASK-2.1 · [x] TASK-2.2 · [x] TASK-2.3_
 
 ---
 
@@ -508,6 +508,8 @@ final class ProfileError extends ProfileState { final Failure failure; }
 ---
 
 ## Phase 3: Inventory Feature
+
+_Status: [x] TASK-3.1 · [x] TASK-3.2 · [x] TASK-3.3 · [x] TASK-3.4 · [x] TASK-3.5_
 
 ---
 
@@ -646,6 +648,8 @@ final class InventoryFilterChanged extends InventoryEvent { final String? query;
 ---
 
 ## Phase 4: Scheduling Feature
+
+_Status: [x] TASK-4.1 · [x] TASK-4.2 · [x] TASK-4.3 · [x] TASK-4.4 · [x] TASK-4.5_
 
 ---
 
@@ -819,6 +823,8 @@ final class ScheduleDoseSkipped extends ScheduleEvent { final LogDoseParams para
 
 ## Phase 5: Sync & Background Tasks
 
+_Status: [ ] TASK-5.1 · [ ] TASK-5.2 · [ ] TASK-5.3_
+
 ---
 
 ### TASK-5.1 — SyncQueue & SyncManager
@@ -905,6 +911,8 @@ idle
 
 ## Phase 6: Dashboard Feature
 
+_Status: [x] TASK-6.1_
+
 ---
 
 ### TASK-6.1 — Dashboard Cubit & Page
@@ -942,6 +950,8 @@ final class DashboardLoaded extends DashboardState {
 ---
 
 ## Phase 7: Polish & Hardening
+
+_Status: [ ] TASK-7.1 · [ ] TASK-7.2 · [ ] TASK-7.3_
 
 ---
 

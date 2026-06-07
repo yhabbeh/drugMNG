@@ -110,11 +110,15 @@ lib/
 │   │   │   └── repositories/
 │   │   │       └── profile_repository_impl.dart
 │   │   └── presentation/
+│   │       ├── bloc/
+│   │       │   ├── profiles_bloc.dart
+│   │       │   ├── profiles_event.dart
+│   │       │   └── profiles_state.dart
 │   │       ├── cubit/
-│   │       │   ├── profile_cubit.dart
-│   │       │   └── profile_state.dart
+│   │       │   └── active_profile_cubit.dart
 │   │       ├── pages/
-│   │       │   └── profile_management_page.dart
+│   │       │   ├── profile_list_page.dart
+│   │       │   └── profile_form_page.dart
 │   │       └── widgets/
 │   │           └── profile_avatar_selector.dart
 │   │
@@ -155,7 +159,8 @@ lib/
 │   │       │   └── expiration_warning_state.dart
 │   │       ├── pages/
 │   │       │   ├── inventory_list_page.dart
-│   │       │   └── add_edit_medication_page.dart
+│   │       │   ├── medication_detail_page.dart
+│   │       │   └── medication_form_page.dart
 │   │       └── widgets/
 │   │           ├── medication_card.dart
 │   │           ├── stock_level_indicator.dart
@@ -199,8 +204,9 @@ lib/
 │   │       │   ├── dose_log_cubit.dart
 │   │       │   └── dose_log_state.dart
 │   │       ├── pages/
-│   │       │   ├── schedule_overview_page.dart
-│   │       │   └── create_schedule_page.dart
+│   │       │   ├── schedule_list_page.dart
+│   │       │   ├── schedule_form_page.dart
+│   │       │   └── dose_action_page.dart
 │   │       └── widgets/
 │   │           ├── daily_dose_timeline.dart
 │   │           ├── dose_action_sheet.dart
