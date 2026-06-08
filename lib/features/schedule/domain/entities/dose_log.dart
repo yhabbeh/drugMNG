@@ -14,6 +14,7 @@ final class DoseLog extends Equatable {
     required this.status,
     this.notes,
     this.stockDeductedCount = 0,
+    this.sideEffectId,
   });
 
   final String id;
@@ -26,6 +27,7 @@ final class DoseLog extends Equatable {
   final DoseStatus status;
   final String? notes;
   final int stockDeductedCount;
+  final String? sideEffectId;
 
   DoseLog copyWith({
     String? id,
@@ -38,6 +40,7 @@ final class DoseLog extends Equatable {
     DoseStatus? status,
     String? notes,
     int? stockDeductedCount,
+    String? sideEffectId,
   }) {
     return DoseLog(
       id: id ?? this.id,
@@ -50,6 +53,7 @@ final class DoseLog extends Equatable {
       status: status ?? this.status,
       notes: notes ?? this.notes,
       stockDeductedCount: stockDeductedCount ?? this.stockDeductedCount,
+      sideEffectId: sideEffectId ?? this.sideEffectId,
     );
   }
 
@@ -65,5 +69,6 @@ final class DoseLog extends Equatable {
         status,
         notes,
         stockDeductedCount,
+        sideEffectId,
       ];
 }

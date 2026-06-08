@@ -22,6 +22,7 @@ class _MedicationFormPageState extends State<MedicationFormPage> {
   late final TextEditingController _notesController;
   late final TextEditingController _stockController;
   late final TextEditingController _refillThresholdController;
+  late final TextEditingController _estimatedDosesPerDayController;
   late final TextEditingController _manufacturerController;
   late final TextEditingController _batchNumberController;
   late DrugForm _drugForm;
@@ -46,6 +47,9 @@ class _MedicationFormPageState extends State<MedicationFormPage> {
     _refillThresholdController = TextEditingController(
       text: med?.refillThreshold?.toString() ?? '',
     );
+    _estimatedDosesPerDayController = TextEditingController(
+      text: med?.estimatedDosesPerDay?.toString() ?? '',
+    );
     _manufacturerController = TextEditingController(text: med?.manufacturer ?? '');
     _batchNumberController = TextEditingController(text: med?.batchNumber ?? '');
     _drugForm = med?.drugForm ?? DrugForm.tablet;
@@ -60,6 +64,7 @@ class _MedicationFormPageState extends State<MedicationFormPage> {
     _notesController.dispose();
     _stockController.dispose();
     _refillThresholdController.dispose();
+    _estimatedDosesPerDayController.dispose();
     _manufacturerController.dispose();
     _batchNumberController.dispose();
     super.dispose();
@@ -200,6 +205,15 @@ class _MedicationFormPageState extends State<MedicationFormPage> {
               ),
               const SizedBox(height: 16),
               TextFormField(
+                controller: _estimatedDosesPerDayController,
+                decoration: const InputDecoration(
+                  labelText: 'Estimated Doses Per Day (optional, for PRN)',
+                  border: OutlineInputBorder(),
+                ),
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
                 controller: _manufacturerController,
                 decoration: const InputDecoration(
                   labelText: 'Manufacturer (optional)',
@@ -259,6 +273,7 @@ class _MedicationFormPageState extends State<MedicationFormPage> {
           : _notesController.text.trim(),
       currentStock: int.parse(_stockController.text.trim()),
       refillThreshold: int.tryParse(_refillThresholdController.text.trim()),
+      estimatedDosesPerDay: double.tryParse(_estimatedDosesPerDayController.text.trim()),
       expirationDate: _expirationDate,
       manufacturer: _manufacturerController.text.trim().isEmpty
           ? null

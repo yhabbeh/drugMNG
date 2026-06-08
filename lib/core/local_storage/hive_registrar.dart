@@ -14,6 +14,7 @@ abstract final class HiveRegistrar {
       Hive.openBox(HiveBoxNames.doseLogs),
       Hive.openBox(HiveBoxNames.syncQueue),
       Hive.openBox(HiveBoxNames.userPreferences),
+      Hive.openBox(HiveBoxNames.symptoms),
     ]);
   }
 }

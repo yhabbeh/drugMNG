@@ -70,6 +70,15 @@ final class ScheduleRepositoryImpl implements ScheduleRepository {
   }
 
   @override
+  StreamEitherFailure<List<DoseLog>> watchDoseLogs(
+    String profileId,
+  ) {
+    return _localDataSource.watchLogs(profileId).map(
+          (models) => Right(models.map((m) => m.toDomain()).toList()),
+        );
+  }
+
+  @override
   EitherFailure<Unit> createSchedule(DoseSchedule schedule) async {
     try {
       // Assign a UUID if the form did not provide one.

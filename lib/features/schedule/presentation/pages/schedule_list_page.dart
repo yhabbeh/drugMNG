@@ -2,11 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:drug/core/di/injection_container.dart';
 import 'package:drug/core/router/app_routes.dart';
 import 'package:drug/features/profiles/presentation/cubit/active_profile_cubit.dart';
 import 'package:drug/features/schedule/domain/entities/dose_schedule.dart';
 import 'package:drug/features/schedule/domain/entities/recurrence_rule.dart';
 import 'package:drug/features/schedule/presentation/bloc/schedule_bloc.dart';
+import 'package:drug/features/schedule/presentation/cubit/calendar_cubit.dart';
+import 'package:drug/features/schedule/presentation/pages/schedule_calendar_view.dart';
 
 class ScheduleListPage extends StatefulWidget {
   const ScheduleListPage({super.key});
@@ -16,6 +19,8 @@ class ScheduleListPage extends StatefulWidget {
 }
 
 class _ScheduleListPageState extends State<ScheduleListPage> {
+  String _selectedView = 'list';
+
   @override
   void initState() {
     super.initState();
@@ -70,24 +75,57 @@ class _ScheduleListPageState extends State<ScheduleListPage> {
           final profile = (activeState as ActiveProfileSelected).profile;
 
           return Scaffold(
-            appBar: AppBar(title: Text('${profile.displayName}\'s Schedule')),
+            appBar: AppBar(
+              title: Text('${profile.displayName}\'s Schedule'),
+              bottom: PreferredSize(
+                preferredSize: const Size.fromHeight(48),
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: SegmentedButton<String>(
+                    segments: const [
+                      ButtonSegment<String>(
+                        value: 'list',
+                        label: Text('Schedules'),
+                        icon: Icon(Icons.list_alt),
+                      ),
+                      ButtonSegment<String>(
+                        value: 'calendar',
+                        label: Text('Calendar'),
+                        icon: Icon(Icons.calendar_month),
+                      ),
+                    ],
+                    selected: {_selectedView},
+                    onSelectionChanged: (val) {
+                      setState(() {
+                        _selectedView = val.first;
+                      });
+                    },
+                  ),
+                ),
+              ),
+            ),
             floatingActionButton: FloatingActionButton(
               onPressed: () => context.push(AppRoutes.scheduleForm),
               child: const Icon(Icons.add),
             ),
-            body: BlocBuilder<ScheduleBloc, ScheduleState>(
-              builder: (context, state) {
-                return switch (state) {
-                  ScheduleInitial() || ScheduleDoseActionSuccess() =>
-                    const Center(child: CircularProgressIndicator()),
-                  ScheduleLoading() => const Center(child: CircularProgressIndicator()),
-                  ScheduleLoaded(:final schedules, :final isLoading) =>
-                    _buildBody(context, schedules, isLoading: isLoading),
-                  ScheduleError(:final failure) =>
-                    Center(child: Text('Error: ${failure.message}')),
-                };
-              },
-            ),
+            body: _selectedView == 'calendar'
+                ? BlocProvider(
+                    create: (context) => sl<CalendarCubit>(),
+                    child: const ScheduleCalendarView(),
+                  )
+                : BlocBuilder<ScheduleBloc, ScheduleState>(
+                    builder: (context, state) {
+                      return switch (state) {
+                        ScheduleInitial() || ScheduleDoseActionSuccess() =>
+                          const Center(child: CircularProgressIndicator()),
+                        ScheduleLoading() => const Center(child: CircularProgressIndicator()),
+                        ScheduleLoaded(:final schedules, :final isLoading) =>
+                          _buildBody(context, schedules, isLoading: isLoading),
+                        ScheduleError(:final failure) =>
+                          Center(child: Text('Error: ${failure.message}')),
+                      };
+                    },
+                  ),
           );
         },
       ),

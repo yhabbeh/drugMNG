@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:drug/core/router/app_routes.dart';
 import 'package:drug/features/inventory/domain/entities/medication.dart';
 import 'package:drug/features/inventory/presentation/bloc/inventory_bloc.dart';
+import 'package:drug/features/inventory/presentation/cubit/refill_alert_cubit.dart';
 import 'package:drug/features/inventory/presentation/pages/stock_adjust_sheet.dart';
 
 class MedicationDetailPage extends StatelessWidget {
@@ -47,11 +48,29 @@ class MedicationDetailPage extends StatelessWidget {
               label: 'Dosage',
               value: '${medication.dosageAmount} ${medication.dosageUnit?.name ?? ''}',
             ),
-          _StockCard(
-            currentStock: medication.currentStock,
-            refillThreshold: medication.refillThreshold,
-            isLowStock: isLowStock,
-            onAdjust: () => showStockAdjustSheet(context, medication),
+          BlocBuilder<RefillAlertCubit, RefillAlertState>(
+            builder: (context, refillState) {
+              String? depletionText;
+              if (refillState is RefillAlertLoaded) {
+                final match = refillState.alerts
+                    .where((a) => a.medication.id == medication.id)
+                    .firstOrNull;
+                if (match != null) {
+                  final dateStr =
+                      '${match.predictedEmptyDate.month}/${match.predictedEmptyDate.day}/${match.predictedEmptyDate.year}';
+                  depletionText = match.daysUntilEmpty == 0
+                      ? 'Depleted today!'
+                      : 'Estimated empty in ${match.daysUntilEmpty} days ($dateStr)';
+                }
+              }
+              return _StockCard(
+                currentStock: medication.currentStock,
+                refillThreshold: medication.refillThreshold,
+                isLowStock: isLowStock,
+                depletionText: depletionText,
+                onAdjust: () => showStockAdjustSheet(context, medication),
+              );
+            },
           ),
           _ExpiryCard(daysUntilExpiry: daysUntilExpiry, date: medication.expirationDate),
           if (medication.notes != null && medication.notes!.isNotEmpty)
@@ -138,12 +157,14 @@ final class _StockCard extends StatelessWidget {
     required this.currentStock,
     required this.refillThreshold,
     required this.isLowStock,
+    this.depletionText,
     required this.onAdjust,
   });
 
   final int currentStock;
   final int? refillThreshold;
   final bool isLowStock;
+  final String? depletionText;
   final VoidCallback onAdjust;
 
   @override
@@ -177,6 +198,16 @@ final class _StockCard extends StatelessWidget {
                 'Refill when below: $refillThreshold',
                 style: Theme.of(context).textTheme.bodySmall,
               ),
+            if (depletionText != null) ...[
+              const SizedBox(height: 6),
+              Text(
+                depletionText!,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Colors.orange.shade800,
+                      fontWeight: FontWeight.w600,
+                    ),
+              ),
+            ],
           ],
         ),
       ),

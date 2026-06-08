@@ -12,6 +12,7 @@ final class MedicationModel {
     this.notes,
     required this.currentStock,
     this.refillThreshold,
+    this.estimatedDosesPerDay,
     required this.expirationDate,
     this.manufacturer,
     this.batchNumber,
@@ -28,6 +29,7 @@ final class MedicationModel {
   final String? notes;
   final int currentStock;
   final int? refillThreshold;
+  final double? estimatedDosesPerDay;
   final DateTime expirationDate;
   final String? manufacturer;
   final String? batchNumber;
@@ -45,6 +47,7 @@ final class MedicationModel {
       notes: json['notes'] as String?,
       currentStock: json['currentStock'] as int,
       refillThreshold: json['refillThreshold'] as int?,
+      estimatedDosesPerDay: (json['estimatedDosesPerDay'] as num?)?.toDouble(),
       expirationDate: DateTime.parse(json['expirationDate'] as String),
       manufacturer: json['manufacturer'] as String?,
       batchNumber: json['batchNumber'] as String?,
@@ -64,6 +67,7 @@ final class MedicationModel {
       'notes': notes,
       'currentStock': currentStock,
       'refillThreshold': refillThreshold,
+      'estimatedDosesPerDay': estimatedDosesPerDay,
       'expirationDate': expirationDate.toIso8601String(),
       'manufacturer': manufacturer,
       'batchNumber': batchNumber,
@@ -83,6 +87,7 @@ final class MedicationModel {
       notes: medication.notes,
       currentStock: medication.currentStock,
       refillThreshold: medication.refillThreshold,
+      estimatedDosesPerDay: medication.estimatedDosesPerDay,
       expirationDate: medication.expirationDate,
       manufacturer: medication.manufacturer,
       batchNumber: medication.batchNumber,
@@ -104,6 +109,7 @@ final class MedicationModel {
       notes: notes,
       currentStock: currentStock,
       refillThreshold: refillThreshold,
+      estimatedDosesPerDay: estimatedDosesPerDay,
       expirationDate: expirationDate,
       manufacturer: manufacturer,
       batchNumber: batchNumber,

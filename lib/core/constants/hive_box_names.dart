@@ -6,4 +6,5 @@ abstract final class HiveBoxNames {
   static const String doseLogs = 'dose_logs_box';
   static const String syncQueue = 'sync_queue_box';
   static const String userPreferences = 'user_preferences_box';
+  static const String symptoms = 'symptoms_box';
 }

@@ -1,11 +1,16 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:path_provider/path_provider.dart';
 
 import 'package:drug/core/di/injection_container.dart';
 import 'package:drug/core/notifications/notification_scheduler.dart';
 import 'package:drug/features/auth/domain/entities/user_profile.dart';
 import 'package:drug/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:drug/features/profiles/presentation/cubit/active_profile_cubit.dart';
+import 'package:drug/features/settings/domain/services/clinical_export_service.dart';
 import 'package:drug/features/settings/domain/settings_state.dart';
 import 'package:drug/features/settings/presentation/cubit/settings_cubit.dart';
 
@@ -31,7 +36,9 @@ class SettingsPage extends StatelessWidget {
               _NotificationsEnabledTile(),
               _SectionHeader('Inventory'),
               _ExpirationWarningTile(),
+              _RefillWarningTile(),
               _SectionHeader('Data'),
+              _ExportCsvTile(),
               _ClearLocalDataTile(),
               _SectionHeader('About'),
               _AboutTile(),
@@ -455,4 +462,133 @@ class _AboutTile extends StatelessWidget {
       ),
     );
   }
+}
+
+class _RefillWarningTile extends StatelessWidget {
+  const _RefillWarningTile();
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<SettingsCubit, SettingsState>(
+      buildWhen: (a, b) => a.refillAlertDays != b.refillAlertDays,
+      builder: (context, state) {
+        return Card(
+          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          child: ListTile(
+            leading: const Icon(Icons.battery_alert_outlined),
+            title: const Text('Refill reminder threshold'),
+            subtitle: Text('Alert ${state.refillAlertDays} days before stock runs out'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => _pickDays(context, state.refillAlertDays),
+          ),
+        );
+      },
+    );
+  }
+
+  void _pickDays(BuildContext context, int current) {
+    const options = [3, 5, 7, 14];
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => SimpleDialog(
+        title: const Text('Alert before depletion'),
+        children: [
+          RadioGroup<int>(
+            groupValue: current,
+            onChanged: (value) {
+              if (value != null) {
+                context.read<SettingsCubit>().setRefillAlertDays(value);
+                Navigator.of(ctx).pop();
+              }
+            },
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                for (final days in options)
+                  RadioListTile<int>(
+                    value: days,
+                    groupValue: current,
+                    onChanged: (value) {
+                      if (value != null) {
+                        context.read<SettingsCubit>().setRefillAlertDays(value);
+                        Navigator.of(ctx).pop();
+                      }
+                    },
+                    title: Text('$days days'),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ExportCsvTile extends StatelessWidget {
+  const _ExportCsvTile();
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      child: ListTile(
+        leading: const Icon(Icons.file_download_outlined),
+        title: const Text('Export Clinical Report'),
+        subtitle: const Text('Download CSV adherence history to share with doctors'),
+        onTap: () => _exportReport(context),
+      ),
+    );
+  }
+
+  Future<void> _exportReport(BuildContext context) async {
+    final activeState = context.read<ActiveProfileCubit>().state;
+    if (activeState is! ActiveProfileSelected) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select an active profile first')),
+      );
+      return;
+    }
+
+    final profile = activeState.profile;
+    final csvContent = ClinicalExportService.generateCsv(profile.id);
+    
+    // Copy to clipboard
+    await Clipboard.setData(ClipboardData(text: csvContent));
+
+    String saveMsg = '';
+    try {
+      final directory = await getApplicationDocumentsDirectory();
+      final file = File('${directory.path}/${profile.displayName.replaceAll(' ', '_')}_adherence_report.csv');
+      await file.writeAsString(csvContent);
+      saveMsg = ' and saved to documents';
+    } catch (_) {
+      // Fallback if path_provider fails (e.g. on web or unsupported platforms)
+    }
+
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Report copied to clipboard$saveMsg!'),
+          duration: const Duration(seconds: 4),
+        ),
+      );
+    }
+  }
+}
+
+class RadioGroup<T> extends StatelessWidget {
+  const RadioGroup({
+    super.key,
+    required this.groupValue,
+    required this.onChanged,
+    required this.child,
+  });
+
+  final T groupValue;
+  final ValueChanged<T?> onChanged;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => child;
 }

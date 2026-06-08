@@ -1,7 +1,10 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+
+import 'package:drug/core/di/injection_container.dart';
 
 import 'package:drug/core/router/app_routes.dart';
 import 'package:drug/features/auth/presentation/bloc/auth_bloc.dart';
@@ -20,6 +23,9 @@ import 'package:drug/features/schedule/presentation/pages/dose_action_page.dart'
 import 'package:drug/features/schedule/presentation/pages/schedule_form_page.dart';
 import 'package:drug/features/schedule/presentation/pages/schedule_list_page.dart';
 import 'package:drug/features/settings/presentation/pages/settings_page.dart';
+import 'package:drug/features/symptoms/presentation/cubit/symptom_cubit.dart';
+import 'package:drug/features/symptoms/presentation/pages/symptom_form_page.dart';
+import 'package:drug/features/symptoms/presentation/pages/symptom_timeline_page.dart';
 
 GoRouter buildAppRouter(AuthBloc authBloc) {
   return GoRouter(
@@ -120,6 +126,27 @@ GoRouter buildAppRouter(AuthBloc authBloc) {
             name: 'adherence',
             builder: (context, state) => const AdherencePage(),
           ),
+          GoRoute(
+            path: AppRoutes.symptoms,
+            name: 'symptoms',
+            builder: (context, state) => BlocProvider(
+              create: (context) => sl<SymptomCubit>(),
+              child: const SymptomTimelinePage(),
+            ),
+            routes: [
+              GoRoute(
+                path: 'form',
+                name: 'symptomForm',
+                builder: (context, state) {
+                  final initialMedId = state.extra as String?;
+                  return BlocProvider(
+                    create: (context) => sl<SymptomCubit>(),
+                    child: SymptomFormPage(initialMedicationId: initialMedId),
+                  );
+                },
+              ),
+            ],
+          ),
         ],
       ),
     ],
@@ -152,7 +179,7 @@ final class MainShell extends StatelessWidget {
           NavigationDestination(icon: Icon(Icons.home_outlined), label: 'Home'),
           NavigationDestination(icon: Icon(Icons.medication_outlined), label: 'Inventory'),
           NavigationDestination(icon: Icon(Icons.schedule_outlined), label: 'Schedule'),
-          NavigationDestination(icon: Icon(Icons.person_outline), label: 'Profiles'),
+          NavigationDestination(icon: Icon(Icons.health_and_safety_outlined), label: 'Diary'),
           NavigationDestination(icon: Icon(Icons.settings_outlined), label: 'Settings'),
         ],
       ),
@@ -163,7 +190,7 @@ final class MainShell extends StatelessWidget {
     final location = GoRouterState.of(context).matchedLocation;
     if (location.startsWith(AppRoutes.inventory)) return 1;
     if (location.startsWith(AppRoutes.schedule)) return 2;
-    if (location.startsWith(AppRoutes.profiles)) return 3;
+    if (location.startsWith(AppRoutes.symptoms)) return 3;
     if (location.startsWith(AppRoutes.settings)) return 4;
     return 0;
   }
@@ -177,7 +204,7 @@ final class MainShell extends StatelessWidget {
       case 2:
         context.go(AppRoutes.schedule);
       case 3:
-        context.go(AppRoutes.profiles);
+        context.go(AppRoutes.symptoms);
       case 4:
         context.go(AppRoutes.settings);
       default:

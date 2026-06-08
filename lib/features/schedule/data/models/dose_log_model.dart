@@ -12,6 +12,7 @@ final class DoseLogModel {
     required this.status,
     this.notes,
     this.stockDeductedCount = 0,
+    this.sideEffectId,
   });
 
   final String id;
@@ -24,6 +25,7 @@ final class DoseLogModel {
   final String status;
   final String? notes;
   final int stockDeductedCount;
+  final String? sideEffectId;
 
   factory DoseLogModel.fromJson(Map<String, dynamic> json) {
     return DoseLogModel(
@@ -39,6 +41,7 @@ final class DoseLogModel {
       status: json['status'] as String,
       notes: json['notes'] as String?,
       stockDeductedCount: json['stockDeductedCount'] as int? ?? 0,
+      sideEffectId: json['sideEffectId'] as String?,
     );
   }
 
@@ -54,6 +57,7 @@ final class DoseLogModel {
       'status': status,
       'notes': notes,
       'stockDeductedCount': stockDeductedCount,
+      'sideEffectId': sideEffectId,
     };
   }
 
@@ -69,6 +73,7 @@ final class DoseLogModel {
       status: log.status.name,
       notes: log.notes,
       stockDeductedCount: log.stockDeductedCount,
+      sideEffectId: log.sideEffectId,
     );
   }
 
@@ -84,6 +89,7 @@ final class DoseLogModel {
       status: DoseStatus.values.firstWhere((s) => s.name == status),
       notes: notes,
       stockDeductedCount: stockDeductedCount,
+      sideEffectId: sideEffectId,
     );
   }
 }

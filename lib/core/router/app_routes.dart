@@ -11,4 +11,6 @@ abstract final class AppRoutes {
   static const String profileForm = '/profiles/form';
   static const String settings = '/settings';
   static const String adherence = '/adherence';
+  static const String symptoms = '/symptoms';
+  static const String symptomForm = '/symptoms/form';
 }

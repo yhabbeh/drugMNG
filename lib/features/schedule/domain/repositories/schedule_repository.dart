@@ -10,6 +10,7 @@ abstract interface class ScheduleRepository {
   EitherFailure<List<DoseSchedule>> getSchedulesForProfile(String profileId);
   StreamEitherFailure<List<DoseSchedule>> watchSchedulesForProfile(
       String profileId);
+  StreamEitherFailure<List<DoseLog>> watchDoseLogs(String profileId);
   EitherFailure<Unit> createSchedule(DoseSchedule schedule);
   EitherFailure<Unit> updateSchedule(DoseSchedule schedule);
   EitherFailure<Unit> deleteSchedule(String id);

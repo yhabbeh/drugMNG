@@ -20,6 +20,7 @@ import 'package:drug/features/schedule/presentation/bloc/schedule_bloc.dart';
 import 'package:drug/features/schedule/presentation/cubit/dose_log_cubit.dart';
 import 'package:drug/features/settings/presentation/cubit/settings_cubit.dart';
 import 'package:drug/features/settings/domain/settings_state.dart';
+import 'package:drug/features/inventory/presentation/cubit/refill_alert_cubit.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -33,6 +34,7 @@ void main() async {
   final activeProfileCubit = sl<ActiveProfileCubit>();
   final inventoryBloc = sl<InventoryBloc>();
   final expirationWarningCubit = sl<ExpirationWarningCubit>();
+  final refillAlertCubit = sl<RefillAlertCubit>();
   final scheduleBloc = sl<ScheduleBloc>();
   final doseLogCubit = sl<DoseLogCubit>();
   final settingsCubit = SettingsCubit();
@@ -67,6 +69,7 @@ void main() async {
       activeProfileCubit: activeProfileCubit,
       inventoryBloc: inventoryBloc,
       expirationWarningCubit: expirationWarningCubit,
+      refillAlertCubit: refillAlertCubit,
       scheduleBloc: scheduleBloc,
       doseLogCubit: doseLogCubit,
       settingsCubit: settingsCubit,
@@ -84,6 +87,7 @@ final class DrugApp extends StatelessWidget {
     required this.activeProfileCubit,
     required this.inventoryBloc,
     required this.expirationWarningCubit,
+    required this.refillAlertCubit,
     required this.scheduleBloc,
     required this.doseLogCubit,
     required this.settingsCubit,
@@ -96,6 +100,7 @@ final class DrugApp extends StatelessWidget {
   final ActiveProfileCubit activeProfileCubit;
   final InventoryBloc inventoryBloc;
   final ExpirationWarningCubit expirationWarningCubit;
+  final RefillAlertCubit refillAlertCubit;
   final ScheduleBloc scheduleBloc;
   final DoseLogCubit doseLogCubit;
   final SettingsCubit settingsCubit;
@@ -110,6 +115,7 @@ final class DrugApp extends StatelessWidget {
         BlocProvider.value(value: activeProfileCubit),
         BlocProvider.value(value: inventoryBloc),
         BlocProvider.value(value: expirationWarningCubit),
+        BlocProvider.value(value: refillAlertCubit),
         BlocProvider.value(value: scheduleBloc),
         BlocProvider.value(value: doseLogCubit),
         BlocProvider.value(value: settingsCubit),

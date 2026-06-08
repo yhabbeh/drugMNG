@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:drug/core/router/app_routes.dart';
+import 'package:drug/features/inventory/presentation/cubit/refill_alert_cubit.dart';
 import 'package:drug/features/dashboard/presentation/pages/dashboard_page.dart';
 import 'package:drug/features/inventory/domain/entities/medication.dart';
 import 'package:drug/features/inventory/domain/services/inventory_filter.dart';
@@ -143,12 +144,19 @@ class _InventoryListPageState extends State<InventoryListPage> {
                       itemCount: filtered.length,
                       itemBuilder: (context, index) {
                         final medication = filtered[index];
-                        return _MedicationCard(
-                          medication: medication,
-                          onTap: () => context.push(
-                            '${AppRoutes.inventory}/detail',
-                            extra: medication,
-                          ),
+                        return BlocBuilder<RefillAlertCubit, RefillAlertState>(
+                          builder: (context, refillState) {
+                            final hasRefillAlert = refillState is RefillAlertLoaded &&
+                                refillState.alerts.any((a) => a.medication.id == medication.id);
+                            return _MedicationCard(
+                              medication: medication,
+                              showRefillAlert: hasRefillAlert,
+                              onTap: () => context.push(
+                                '${AppRoutes.inventory}/detail',
+                                extra: medication,
+                              ),
+                            );
+                          },
                         );
                       },
                     ),
@@ -281,10 +289,12 @@ final class _ExpiryBanner extends StatelessWidget {
 final class _MedicationCard extends StatelessWidget {
   const _MedicationCard({
     required this.medication,
+    required this.showRefillAlert,
     required this.onTap,
   });
 
   final Medication medication;
+  final bool showRefillAlert;
   final VoidCallback onTap;
 
   @override
@@ -330,6 +340,13 @@ final class _MedicationCard extends StatelessWidget {
                   label: 'Stock: ${medication.currentStock}',
                   color: isLowStock ? Colors.red : Colors.green,
                 ),
+                if (showRefillAlert) ...[
+                  const SizedBox(width: 8),
+                  const _Badge(
+                    label: 'Refill soon',
+                    color: Colors.orange,
+                  ),
+                ],
                 if (isExpired) ...[
                   const SizedBox(width: 8),
                   const _Badge(

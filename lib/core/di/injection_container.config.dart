@@ -98,6 +98,18 @@ import '../../features/schedule/domain/usecases/watch_schedules_for_profile.dart
 import '../../features/schedule/presentation/bloc/schedule_bloc.dart' as _i1063;
 import '../../features/schedule/presentation/cubit/dose_log_cubit.dart'
     as _i735;
+import '../../features/inventory/domain/usecases/get_refill_alerts.dart' as _iRefillGetAlerts;
+import '../../features/inventory/presentation/cubit/refill_alert_cubit.dart' as _iRefillAlertCubit;
+import '../../features/schedule/domain/usecases/watch_dose_logs.dart' as _iScheduleWatchLogs;
+import '../../features/schedule/presentation/cubit/calendar_cubit.dart' as _iCalendarCubit;
+import '../../features/symptoms/data/datasources/symptom_local_datasource.dart' as _iSymptomDS;
+import '../../features/symptoms/data/repositories/symptom_repository_impl.dart' as _iSymptomRepoImpl;
+import '../../features/symptoms/domain/repositories/symptom_repository.dart' as _iSymptomRepo;
+import '../../features/symptoms/domain/usecases/log_symptom.dart' as _iSymptomLog;
+import '../../features/symptoms/domain/usecases/delete_symptom.dart' as _iSymptomDelete;
+import '../../features/symptoms/domain/usecases/get_symptoms_timeline.dart' as _iSymptomTimeline;
+import '../../features/symptoms/domain/usecases/watch_symptoms.dart' as _iSymptomWatch;
+import '../../features/symptoms/presentation/cubit/symptom_cubit.dart' as _iSymptomCubit;
 import '../network/network_info.dart' as _i932;
 import '../network/network_info_impl.dart' as _i865;
 import 'modules/core_module.dart' as _i134;
@@ -252,6 +264,45 @@ extension GetItInjectableX on _i174.GetIt {
           logDoseSkipped: gh<_i523.LogDoseSkipped>(),
           revertDoseLog: gh<_i999.RevertDoseLog>(),
         ));
+
+    // Refill Alerts
+    gh.factory<_iRefillGetAlerts.GetRefillAlerts>(() =>
+        _iRefillGetAlerts.GetRefillAlerts(
+            inventoryRepository: gh<_i422.InventoryRepository>(),
+            scheduleRepository: gh<_i736.ScheduleRepository>()));
+    gh.singleton<_iRefillAlertCubit.RefillAlertCubit>(() =>
+        _iRefillAlertCubit.RefillAlertCubit(
+            getRefillAlerts: gh<_iRefillGetAlerts.GetRefillAlerts>(),
+            activeProfileCubit: gh<_i343.ActiveProfileCubit>()));
+
+    // Calendar View
+    gh.factory<_iScheduleWatchLogs.WatchDoseLogs>(() =>
+        _iScheduleWatchLogs.WatchDoseLogs(gh<_i736.ScheduleRepository>()));
+    gh.factory<_iCalendarCubit.CalendarCubit>(() =>
+        _iCalendarCubit.CalendarCubit(
+            watchSchedules: gh<_i467.WatchSchedulesForProfile>(),
+            watchDoseLogs: gh<_iScheduleWatchLogs.WatchDoseLogs>()));
+
+    // Symptoms Diary
+    gh.lazySingleton<_iSymptomDS.SymptomLocalDataSource>(() =>
+        _iSymptomDS.SymptomLocalDataSourceImpl.create());
+    gh.lazySingleton<_iSymptomRepo.SymptomRepository>(() =>
+        _iSymptomRepoImpl.SymptomRepositoryImpl(
+            localDataSource: gh<_iSymptomDS.SymptomLocalDataSource>()));
+    gh.factory<_iSymptomLog.LogSymptom>(() =>
+        _iSymptomLog.LogSymptom(gh<_iSymptomRepo.SymptomRepository>()));
+    gh.factory<_iSymptomDelete.DeleteSymptom>(() =>
+        _iSymptomDelete.DeleteSymptom(gh<_iSymptomRepo.SymptomRepository>()));
+    gh.factory<_iSymptomTimeline.GetSymptomsTimeline>(() =>
+        _iSymptomTimeline.GetSymptomsTimeline(gh<_iSymptomRepo.SymptomRepository>()));
+    gh.factory<_iSymptomWatch.WatchSymptoms>(() =>
+        _iSymptomWatch.WatchSymptoms(gh<_iSymptomRepo.SymptomRepository>()));
+    gh.factory<_iSymptomCubit.SymptomCubit>(() =>
+        _iSymptomCubit.SymptomCubit(
+            watchSymptoms: gh<_iSymptomWatch.WatchSymptoms>(),
+            logSymptom: gh<_iSymptomLog.LogSymptom>(),
+            deleteSymptom: gh<_iSymptomDelete.DeleteSymptom>()));
+
     return this;
   }
 }

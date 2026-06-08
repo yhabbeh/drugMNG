@@ -8,7 +8,9 @@ import 'package:drug/features/adherence/presentation/bloc/adherence_bloc.dart';
 import 'package:drug/features/adherence/presentation/bloc/adherence_event.dart';
 import 'package:drug/features/adherence/presentation/bloc/adherence_state.dart';
 import 'package:drug/features/inventory/domain/entities/expiration_warning.dart';
+import 'package:drug/features/inventory/domain/entities/refill_alert.dart';
 import 'package:drug/features/inventory/presentation/cubit/expiration_warning_cubit.dart';
+import 'package:drug/features/inventory/presentation/cubit/refill_alert_cubit.dart';
 import 'package:drug/features/profiles/domain/entities/caregiver_profile.dart';
 import 'package:drug/features/profiles/presentation/cubit/active_profile_cubit.dart';
 import 'package:drug/features/schedule/domain/entities/dose_log.dart';
@@ -17,6 +19,7 @@ import 'package:drug/features/schedule/domain/entities/recurrence_rule.dart';
 import 'package:drug/features/schedule/domain/usecases/schedule_params.dart';
 import 'package:drug/features/schedule/presentation/bloc/schedule_bloc.dart';
 import 'package:drug/features/schedule/presentation/cubit/dose_log_cubit.dart';
+import 'package:drug/features/schedule/presentation/widgets/shared_dose_action_sheet.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -42,6 +45,7 @@ class _DashboardPageState extends State<DashboardPage> {
   void _load(String profileId) {
     context.read<ScheduleBloc>().add(SchedulesStarted(profileId));
     context.read<ExpirationWarningCubit>().refresh();
+    context.read<RefillAlertCubit>().refresh(profileId: profileId);
     context.read<AdherenceBloc>().add(AdherenceStarted(profileId: profileId));
     context.read<DoseLogCubit>().loadForDate(profileId, DateTime.now());
   }
@@ -66,6 +70,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 context.read<DoseLogCubit>().loadForDate(profileId, DateTime.now());
                 context.read<AdherenceBloc>().add(AdherenceStarted(profileId: profileId));
                 context.read<ExpirationWarningCubit>().refresh();
+                context.read<RefillAlertCubit>().refresh(profileId: profileId);
               }
             }
           },
@@ -230,6 +235,19 @@ class _DashboardContent extends StatelessWidget {
                       return const SizedBox.shrink();
                     }
                     return _ExpiryAlertCard(state: state);
+                  },
+                ),
+
+                // ── Refill alert banner ─────────────────────────────────
+                BlocBuilder<RefillAlertCubit, RefillAlertState>(
+                  builder: (context, state) {
+                    if (state is! RefillAlertLoaded) {
+                      return const SizedBox.shrink();
+                    }
+                    if (state.lowStockCount == 0) {
+                      return const SizedBox.shrink();
+                    }
+                    return _RefillAlertCard(state: state);
                   },
                 ),
 
@@ -403,6 +421,194 @@ class _ExpiryAlertCard extends StatelessWidget {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (_) => ExpiryBottomSheet(warnings: warnings),
+    );
+  }
+}
+
+class _RefillAlertCard extends StatelessWidget {
+  const _RefillAlertCard({required this.state});
+
+  final RefillAlertLoaded state;
+
+  @override
+  Widget build(BuildContext context) {
+    final text = '${state.lowStockCount} medication(s) need a refill soon!';
+    final color = Colors.orange;
+
+    return Card(
+      color: color.shade50,
+      margin: const EdgeInsets.only(top: 8),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Row(
+          children: [
+            Icon(Icons.battery_alert_rounded, color: color.shade700, size: 28),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                text,
+                style: TextStyle(
+                  color: color.shade800,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed: () => _showRefillSheet(context, state.alerts),
+              child: Text(
+                'View All',
+                style: TextStyle(color: color.shade700),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showRefillSheet(BuildContext context, List<RefillAlert> alerts) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => RefillBottomSheet(alerts: alerts),
+    );
+  }
+}
+
+class RefillBottomSheet extends StatelessWidget {
+  const RefillBottomSheet({super.key, required this.alerts});
+
+  final List<RefillAlert> alerts;
+
+  @override
+  Widget build(BuildContext context) {
+    final sorted = [...alerts]
+      ..sort((a, b) => a.daysUntilEmpty.compareTo(b.daysUntilEmpty));
+
+    return DraggableScrollableSheet(
+      expand: false,
+      initialChildSize: 0.55,
+      minChildSize: 0.3,
+      maxChildSize: 0.9,
+      builder: (_, controller) {
+        return Column(
+          children: [
+            const SizedBox(height: 12),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade300,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Row(
+                children: [
+                  Text(
+                    'Refill Reminders',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                  ),
+                  const Spacer(),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.secondaryContainer,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      '${alerts.length} items',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Theme.of(context).colorScheme.onSecondaryContainer,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+            const Divider(height: 1),
+            Expanded(
+              child: ListView.builder(
+                controller: controller,
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                itemCount: sorted.length,
+                itemBuilder: (_, i) {
+                  final alert = sorted[i];
+                  final isOut = alert.daysUntilEmpty == 0;
+                  final color = isOut ? Colors.red : Colors.orange;
+
+                  return ListTile(
+                    leading: CircleAvatar(
+                      backgroundColor: color.shade100,
+                      child: Icon(
+                        Icons.warning_amber_rounded,
+                        color: color.shade700,
+                        size: 20,
+                      ),
+                    ),
+                    title: Text(
+                      alert.medication.name,
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    subtitle: Text('Current Stock: ${alert.medication.currentStock} units'),
+                    trailing: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: color.shade50,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: color.shade200),
+                      ),
+                      child: Text(
+                        isOut
+                            ? 'Depleted'
+                            : alert.daysUntilEmpty == 1
+                                ? '1 day left'
+                                : '${alert.daysUntilEmpty}d left',
+                        style: TextStyle(
+                          color: color.shade800,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+            SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+                child: FilledButton.icon(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    context.go(AppRoutes.inventory);
+                  },
+                  icon: const Icon(Icons.medication_outlined),
+                  label: const Text('Go to Inventory'),
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size.fromHeight(48),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }
@@ -801,414 +1007,12 @@ class _TodayDoseOccurrenceCard extends StatelessWidget {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (_) => _DoseActionBottomSheet(log: log),
+      builder: (_) => SharedDoseActionSheet(log: log),
     );
   }
 }
 
-class _DoseActionBottomSheet extends StatefulWidget {
-  const _DoseActionBottomSheet({required this.log});
 
-  final DoseLog log;
-
-  @override
-  State<_DoseActionBottomSheet> createState() => _DoseActionBottomSheetState();
-}
-
-class _DoseActionBottomSheetState extends State<_DoseActionBottomSheet> {
-  late final TextEditingController _notesController;
-  bool _notesChanged = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _notesController = TextEditingController(text: widget.log.notes ?? '');
-    _notesController.addListener(_onNotesChanged);
-  }
-
-  @override
-  void dispose() {
-    _notesController.removeListener(_onNotesChanged);
-    _notesController.dispose();
-    super.dispose();
-  }
-
-  void _onNotesChanged() {
-    final changed = _notesController.text.trim() != (widget.log.notes ?? '');
-    if (changed != _notesChanged) {
-      setState(() {
-        _notesChanged = changed;
-      });
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final timeStr = DateFormat('EEEE, MMMM d • h:mm a').format(widget.log.scheduledAt);
-
-    return Padding(
-      padding: EdgeInsets.fromLTRB(
-        20,
-        20,
-        20,
-        MediaQuery.of(context).viewInsets.bottom + 24,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Center(
-            child: Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Colors.grey.shade300,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          ),
-          const SizedBox(height: 20),
-          Row(
-            children: [
-              Icon(Icons.medication, color: cs.primary, size: 32),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      widget.log.medicationName,
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                    ),
-                    Text(
-                      timeStr,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: cs.onSurfaceVariant,
-                          ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          if (widget.log.status == DoseStatus.taken) ...[
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.green.shade50,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.green.shade200),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.check_circle, color: Colors.green.shade700),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      widget.log.takenAt != null
-                          ? 'This dose was taken at ${DateFormat('h:mm a').format(widget.log.takenAt!)}'
-                          : 'This dose was marked as taken.',
-                      style: TextStyle(color: Colors.green.shade900, fontWeight: FontWeight.w500),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Notes (Optional)',
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: _notesController,
-              decoration: const InputDecoration(
-                hintText: 'e.g., Taken with food, felt slightly dizzy',
-                border: OutlineInputBorder(),
-              ),
-              maxLines: 2,
-            ),
-            const SizedBox(height: 24),
-            if (_notesChanged) ...[
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton.icon(
-                  onPressed: () {
-                    context.read<ScheduleBloc>().add(
-                          ScheduleDoseTaken(
-                            LogDoseParams(
-                              scheduleId: widget.log.scheduleId,
-                              profileId: widget.log.profileId,
-                              medicationId: widget.log.medicationId,
-                              scheduledAt: widget.log.scheduledAt,
-                              notes: _notesController.text.trim().isNotEmpty
-                                  ? _notesController.text.trim()
-                                  : null,
-                            ),
-                          ),
-                        );
-                    Navigator.pop(context);
-                  },
-                  icon: const Icon(Icons.save),
-                  label: const Text('Save Notes'),
-                ),
-              ),
-              const SizedBox(height: 12),
-            ],
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                    ),
-                    onPressed: () {
-                      context.read<ScheduleBloc>().add(
-                            ScheduleDoseReverted(
-                              LogDoseParams(
-                                scheduleId: widget.log.scheduleId,
-                                profileId: widget.log.profileId,
-                                medicationId: widget.log.medicationId,
-                                scheduledAt: widget.log.scheduledAt,
-                              ),
-                            ),
-                          );
-                      Navigator.pop(context);
-                    },
-                    icon: const Icon(Icons.undo),
-                    label: const Text('Revert Dose'),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: OutlinedButton.icon(
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                    ),
-                    onPressed: () {
-                      context.read<ScheduleBloc>().add(
-                            ScheduleDoseSkipped(
-                              LogDoseParams(
-                                scheduleId: widget.log.scheduleId,
-                                profileId: widget.log.profileId,
-                                medicationId: widget.log.medicationId,
-                                scheduledAt: widget.log.scheduledAt,
-                                notes: _notesController.text.trim().isNotEmpty
-                                    ? _notesController.text.trim()
-                                    : null,
-                              ),
-                            ),
-                          );
-                      Navigator.pop(context);
-                    },
-                    icon: const Icon(Icons.close),
-                    label: const Text('Skip Dose'),
-                  ),
-                ),
-              ],
-            ),
-          ] else if (widget.log.status == DoseStatus.skipped) ...[
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.grey.shade100,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.grey.shade300),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.next_plan_outlined, color: Colors.grey.shade700),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      'This dose was skipped.',
-                      style: TextStyle(color: Colors.grey.shade900, fontWeight: FontWeight.w500),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Notes (Optional)',
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: _notesController,
-              decoration: const InputDecoration(
-                hintText: 'e.g., Taken with food, felt slightly dizzy',
-                border: OutlineInputBorder(),
-              ),
-              maxLines: 2,
-            ),
-            const SizedBox(height: 24),
-            if (_notesChanged) ...[
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton.icon(
-                  onPressed: () {
-                    context.read<ScheduleBloc>().add(
-                          ScheduleDoseSkipped(
-                            LogDoseParams(
-                              scheduleId: widget.log.scheduleId,
-                              profileId: widget.log.profileId,
-                              medicationId: widget.log.medicationId,
-                              scheduledAt: widget.log.scheduledAt,
-                              notes: _notesController.text.trim().isNotEmpty
-                                  ? _notesController.text.trim()
-                                  : null,
-                            ),
-                          ),
-                        );
-                    Navigator.pop(context);
-                  },
-                  icon: const Icon(Icons.save),
-                  label: const Text('Save Notes'),
-                ),
-              ),
-              const SizedBox(height: 12),
-            ],
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                    ),
-                    onPressed: () {
-                      context.read<ScheduleBloc>().add(
-                            ScheduleDoseReverted(
-                              LogDoseParams(
-                                scheduleId: widget.log.scheduleId,
-                                profileId: widget.log.profileId,
-                                medicationId: widget.log.medicationId,
-                                scheduledAt: widget.log.scheduledAt,
-                              ),
-                            ),
-                          );
-                      Navigator.pop(context);
-                    },
-                    icon: const Icon(Icons.undo),
-                    label: const Text('Revert Dose'),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: FilledButton.icon(
-                    style: FilledButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                    ),
-                    onPressed: () {
-                      context.read<ScheduleBloc>().add(
-                            ScheduleDoseTaken(
-                              LogDoseParams(
-                                scheduleId: widget.log.scheduleId,
-                                profileId: widget.log.profileId,
-                                medicationId: widget.log.medicationId,
-                                scheduledAt: widget.log.scheduledAt,
-                                notes: _notesController.text.trim().isNotEmpty
-                                    ? _notesController.text.trim()
-                                    : null,
-                              ),
-                            ),
-                          );
-                      Navigator.pop(context);
-                    },
-                    icon: const Icon(Icons.check),
-                    label: const Text('Confirm Taken'),
-                  ),
-                ),
-              ],
-            ),
-          ] else ...[
-            Text(
-              'Add Notes (Optional)',
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: _notesController,
-              decoration: const InputDecoration(
-                hintText: 'e.g., Taken with food, felt slightly dizzy',
-                border: OutlineInputBorder(),
-              ),
-              maxLines: 2,
-            ),
-            const SizedBox(height: 24),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                    ),
-                    onPressed: () {
-                      context.read<ScheduleBloc>().add(
-                            ScheduleDoseSkipped(
-                              LogDoseParams(
-                                scheduleId: widget.log.scheduleId,
-                                profileId: widget.log.profileId,
-                                medicationId: widget.log.medicationId,
-                                scheduledAt: widget.log.scheduledAt,
-                                notes: _notesController.text.trim().isNotEmpty
-                                    ? _notesController.text.trim()
-                                    : null,
-                              ),
-                            ),
-                          );
-                      Navigator.pop(context);
-                    },
-                    icon: const Icon(Icons.close),
-                    label: const Text('Skip Dose'),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: FilledButton.icon(
-                    style: FilledButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                    ),
-                    onPressed: () {
-                      context.read<ScheduleBloc>().add(
-                            ScheduleDoseTaken(
-                              LogDoseParams(
-                                scheduleId: widget.log.scheduleId,
-                                profileId: widget.log.profileId,
-                                medicationId: widget.log.medicationId,
-                                scheduledAt: widget.log.scheduledAt,
-                                notes: _notesController.text.trim().isNotEmpty
-                                    ? _notesController.text.trim()
-                                    : null,
-                              ),
-                            ),
-                          );
-                      Navigator.pop(context);
-                    },
-                    icon: const Icon(Icons.check),
-                    label: const Text('Confirm Taken'),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-}
 
 // ── Quick actions grid ───────────────────────────────────────────────────────
 

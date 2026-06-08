@@ -15,6 +15,7 @@ final class Medication extends Equatable {
     this.notes,
     required this.currentStock,
     this.refillThreshold,
+    this.estimatedDosesPerDay,
     required this.expirationDate,
     this.manufacturer,
     this.batchNumber,
@@ -31,6 +32,7 @@ final class Medication extends Equatable {
   final String? notes;
   final int currentStock;
   final int? refillThreshold;
+  final double? estimatedDosesPerDay;
   final DateTime expirationDate;
   final String? manufacturer;
   final String? batchNumber;
@@ -47,6 +49,7 @@ final class Medication extends Equatable {
     String? notes,
     int? currentStock,
     int? refillThreshold,
+    double? estimatedDosesPerDay,
     DateTime? expirationDate,
     String? manufacturer,
     String? batchNumber,
@@ -65,6 +68,7 @@ final class Medication extends Equatable {
       notes: notes ?? this.notes,
       currentStock: currentStock ?? this.currentStock,
       refillThreshold: refillThreshold ?? this.refillThreshold,
+      estimatedDosesPerDay: estimatedDosesPerDay ?? this.estimatedDosesPerDay,
       expirationDate: expirationDate ?? this.expirationDate,
       manufacturer: manufacturer ?? this.manufacturer,
       batchNumber: batchNumber ?? this.batchNumber,
@@ -84,6 +88,7 @@ final class Medication extends Equatable {
         notes,
         currentStock,
         refillThreshold,
+        estimatedDosesPerDay,
         expirationDate,
         manufacturer,
         batchNumber,

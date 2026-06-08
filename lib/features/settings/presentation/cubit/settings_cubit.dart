@@ -13,6 +13,7 @@ class SettingsCubit extends Cubit<SettingsState> {
   static const _kThemeMode = 'settings.themeMode';
   static const _kNotificationsEnabled = 'settings.notificationsEnabled';
   static const _kExpirationWarningDays = 'settings.expirationWarningDays';
+  static const _kRefillAlertDays = 'settings.refillAlertDays';
 
   Box get _box => Hive.box(HiveBoxNames.userPreferences);
 
@@ -23,11 +24,14 @@ class SettingsCubit extends Cubit<SettingsState> {
         _box.get(_kNotificationsEnabled, defaultValue: true) as bool;
     final expirationWarningDays =
         _box.get(_kExpirationWarningDays, defaultValue: 30) as int;
+    final refillAlertDays =
+        _box.get(_kRefillAlertDays, defaultValue: 7) as int;
 
     emit(SettingsState(
       themeMode: _parseThemeMode(themeModeStr),
       notificationsEnabled: notificationsEnabled,
       expirationWarningDays: expirationWarningDays,
+      refillAlertDays: refillAlertDays,
       loaded: true,
     ));
   }
@@ -47,6 +51,11 @@ class SettingsCubit extends Cubit<SettingsState> {
     emit(state.copyWith(expirationWarningDays: value));
   }
 
+  Future<void> setRefillAlertDays(int value) async {
+    await _box.put(_kRefillAlertDays, value);
+    emit(state.copyWith(refillAlertDays: value));
+  }
+
   Future<void> clearLocalData() async {
     for (final name in const [
       HiveBoxNames.medications,
@@ -55,6 +64,7 @@ class SettingsCubit extends Cubit<SettingsState> {
       HiveBoxNames.doseSchedules,
       HiveBoxNames.doseLogs,
       HiveBoxNames.syncQueue,
+      HiveBoxNames.symptoms,
     ]) {
       await Hive.deleteBoxFromDisk(name);
     }
